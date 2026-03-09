@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user") {
       const { ip, registration, name, user_type_id, begin_time, end_time, password } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
