@@ -4,7 +4,7 @@ import {
   DoorOpen,
   Cpu,
   Users,
-  Settings,
+  Network,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
