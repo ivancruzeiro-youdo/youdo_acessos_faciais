@@ -1,1 +1,4 @@
 project_id = "llvblhtcqejcepgakoko"
+
+[functions.device-proxy]
+verify_jwt = false
