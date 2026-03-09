@@ -153,21 +153,15 @@ Deno.serve(async (req) => {
     }
 
     // ─── Device proxy (ControlID via VPN) ───
+    // Requires /api/vpn/proxy endpoint on EC2
     if (action === "device_status") {
       const { ip } = body;
-      // Try documented proxy first, fallback to direct
-      try {
-        const res = await fetch(`${EC2_API_URL}/proxy`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
-        });
-        return jsonRes(await res.json());
-      } catch {
-        // Fallback: try direct API endpoint
-        const res = await fetch(`${EC2_API_URL}/api/vpn/device/${ip}/status`);
-        return jsonRes(await res.json());
-      }
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
+      });
+      return jsonRes(await res.json());
     }
 
     if (action === "sync_user") {
