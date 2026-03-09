@@ -15,8 +15,9 @@ async function getEc2Token(base: string): Promise<string> {
   if (ec2Token && now < ec2TokenExpiry) return ec2Token;
 
   const email = Deno.env.get("EC2_AUTH_EMAIL");
-  const password = Deno.env.get("EC2_AUTH_PASSWORD");
-  if (!email || !password) throw new Error("EC2 auth credentials not configured");
+  const rawPassword = Deno.env.get("EC2_AUTH_PASSWORD");
+  if (!email || !rawPassword) throw new Error("EC2 auth credentials not configured");
+  const password = String(rawPassword);
 
   const loginUrl = `${base}/auth/login`;
   console.log(`[device-proxy] EC2 login attempt: ${loginUrl}`);
