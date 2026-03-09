@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
 
     if (action === "list_device_users") {
       const { ip } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint: "/load_objects.fcgi", payload: { object: "users" } }),
