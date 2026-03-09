@@ -331,6 +331,13 @@ export default function Equipamentos() {
                 filtered?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.nome}</TableCell>
+                    <TableCell>
+                      {connectedIps.has(item.ip_vpn) ? (
+                        <Badge variant="default" className="bg-green-600 text-xs"><Wifi className="h-3 w-3 mr-1" />Online</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs"><WifiOff className="h-3 w-3 mr-1" />Offline</Badge>
+                      )}
+                    </TableCell>
                     <TableCell><code className="text-xs bg-muted px-2 py-1 rounded">{item.ip_vpn}</code></TableCell>
                     <TableCell>{(item.acessos as any)?.nome}</TableCell>
                     <TableCell>{item.modelo || "—"}</TableCell>
