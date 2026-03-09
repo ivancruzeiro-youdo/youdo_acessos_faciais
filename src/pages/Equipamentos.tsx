@@ -315,6 +315,7 @@ export default function Equipamentos() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>IP VPN</TableHead>
                 <TableHead>Acesso</TableHead>
                 <TableHead>Modelo</TableHead>
