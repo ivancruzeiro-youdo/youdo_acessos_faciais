@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
 
     if (action === "delete_device_user") {
       const { ip, user_ids } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
