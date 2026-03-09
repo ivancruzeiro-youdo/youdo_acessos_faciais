@@ -4,7 +4,7 @@ import {
   DoorOpen,
   Cpu,
   Users,
-  Settings,
+  Network,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -31,6 +31,7 @@ const mainItems = [
   { title: "Acessos", url: "/acessos", icon: DoorOpen },
   { title: "Equipamentos", url: "/equipamentos", icon: Cpu },
   { title: "Usuários", url: "/usuarios", icon: Users },
+  { title: "VPN", url: "/vpn", icon: Network },
 ];
 
 export function AppSidebar() {

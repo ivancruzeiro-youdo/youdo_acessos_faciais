@@ -46,6 +46,23 @@ export default function Equipamentos() {
     },
   });
 
+  const { data: vpnClients } = useQuery({
+    queryKey: ["vpn_clients_status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("device-proxy", {
+        body: { action: "vpn_clients" },
+      });
+      if (error) return { clients: [] };
+      return data;
+    },
+    refetchInterval: 30000,
+    retry: 1,
+  });
+
+  const connectedIps = new Set(
+    (vpnClients?.clients || []).map((c: any) => c.ip_vpn)
+  );
+
   const upsert = useMutation({
     mutationFn: async () => {
       const payload = {
@@ -298,6 +315,7 @@ export default function Equipamentos() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>IP VPN</TableHead>
                 <TableHead>Acesso</TableHead>
                 <TableHead>Modelo</TableHead>
@@ -306,13 +324,20 @@ export default function Equipamentos() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered?.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum registro</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum registro</TableCell></TableRow>
               ) : (
                 filtered?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.nome}</TableCell>
+                    <TableCell>
+                      {connectedIps.has(item.ip_vpn) ? (
+                        <Badge variant="default" className="bg-green-600 text-xs"><Wifi className="h-3 w-3 mr-1" />Online</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs"><WifiOff className="h-3 w-3 mr-1" />Offline</Badge>
+                      )}
+                    </TableCell>
                     <TableCell><code className="text-xs bg-muted px-2 py-1 rounded">{item.ip_vpn}</code></TableCell>
                     <TableCell>{(item.acessos as any)?.nome}</TableCell>
                     <TableCell>{item.modelo || "—"}</TableCell>
