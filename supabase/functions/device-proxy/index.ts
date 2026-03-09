@@ -62,13 +62,13 @@ Deno.serve(async (req) => {
 
     // ─── VPN Server Status ───
     if (action === "vpn_status") {
-      const res = await fetch(`${EC2_API_URL}/api/vpn/status`);
+      const res = await fetch(`${BASE}/vpn/status`);
       return jsonRes(await res.json());
     }
 
     // ─── Connected VPN Clients ───
     if (action === "vpn_clients") {
-      const res = await fetch(`${EC2_API_URL}/api/vpn/clients`);
+      const res = await fetch(`${BASE}/vpn/clients`);
       return jsonRes(await res.json());
     }
 
@@ -80,51 +80,39 @@ Deno.serve(async (req) => {
       if (start_date) params.set("start_date", start_date);
       if (end_date) params.set("end_date", end_date);
       if (limit) params.set("limit", String(limit));
-      const res = await fetch(
-        `${EC2_API_URL}/api/vpn/logs?${params.toString()}`
-      );
+      const res = await fetch(`${BASE}/vpn/logs?${params.toString()}`);
       return jsonRes(await res.json());
     }
 
     // ─── Certificates ───
     if (action === "list_certificates") {
-      const res = await fetch(`${EC2_API_URL}/api/vpn/certificates`);
+      const res = await fetch(`${BASE}/vpn/certificates`);
       return jsonRes(await res.json());
     }
 
     if (action === "create_certificate") {
       const { client_name, ip_address, description, expires_in_days } = body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/certificates`, {
+      const res = await fetch(`${BASE}/vpn/certificates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_name,
-          ip_address,
-          description,
-          expires_in_days,
-        }),
+        body: JSON.stringify({ client_name, ip_address, description, expires_in_days }),
       });
       return jsonRes(await res.json());
     }
 
     if (action === "revoke_certificate") {
       const { certificate_id, reason } = body;
-      const res = await fetch(
-        `${EC2_API_URL}/api/vpn/certificates/${certificate_id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason }),
-        }
-      );
+      const res = await fetch(`${BASE}/vpn/certificates/${certificate_id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
       return jsonRes(await res.json());
     }
 
     if (action === "download_certificate") {
       const { certificate_id } = body;
-      const res = await fetch(
-        `${EC2_API_URL}/api/vpn/certificates/${certificate_id}/download`
-      );
+      const res = await fetch(`${BASE}/vpn/certificates/${certificate_id}/download`);
       const text = await res.text();
       return new Response(text, {
         headers: {
@@ -138,7 +126,7 @@ Deno.serve(async (req) => {
     // ─── Provisioning ───
     if (action === "provision_device") {
       const { device, vpn } = body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/provision`, {
+      const res = await fetch(`${BASE}/vpn/provision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device, vpn }),
@@ -148,17 +136,14 @@ Deno.serve(async (req) => {
 
     if (action === "provision_status") {
       const { device_id } = body;
-      const res = await fetch(
-        `${EC2_API_URL}/api/vpn/provision/${device_id}/status`
-      );
+      const res = await fetch(`${BASE}/vpn/provision/${device_id}/status`);
       return jsonRes(await res.json());
     }
 
     // ─── Device proxy (ControlID via VPN) ───
-    // Requires /api/vpn/proxy endpoint on EC2
     if (action === "device_status") {
       const { ip } = body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
+      const res = await fetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
@@ -167,9 +152,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === "sync_user") {
-      const { ip, registration, name, user_type_id, begin_time, end_time } =
-        body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
+      const { ip, registration, name, user_type_id, begin_time, end_time } = body;
+      const res = await fetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,15 +161,13 @@ Deno.serve(async (req) => {
           endpoint: "/create_objects.fcgi",
           payload: {
             object: "users",
-            values: [
-              {
-                registration,
-                name,
-                user_type_id: user_type_id || 1,
-                begin_time: begin_time || 0,
-                end_time: end_time || 1439,
-              },
-            ],
+            values: [{
+              registration,
+              name,
+              user_type_id: user_type_id || 1,
+              begin_time: begin_time || 0,
+              end_time: end_time || 1439,
+            }],
           },
         }),
       });
@@ -194,7 +176,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
+      const res = await fetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -206,16 +188,16 @@ Deno.serve(async (req) => {
       return jsonRes(await res.json());
     }
 
-    // ─── Scan VPN subnet (uses /api/vpn/clients) ───
+    // ─── Scan VPN (uses /vpn/clients) ───
     if (action === "scan_vpn") {
-      const res = await fetch(`${EC2_API_URL}/api/vpn/clients`);
+      const res = await fetch(`${BASE}/vpn/clients`);
       return jsonRes(await res.json());
     }
 
     // ─── Webhooks ───
     if (action === "configure_webhook") {
       const { url, events, secret } = body;
-      const res = await fetch(`${EC2_API_URL}/api/vpn/webhooks`, {
+      const res = await fetch(`${BASE}/vpn/webhooks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, events, secret }),
