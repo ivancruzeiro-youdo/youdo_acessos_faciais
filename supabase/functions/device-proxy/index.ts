@@ -127,14 +127,14 @@ Deno.serve(async (req) => {
 
     // ─── VPN Server Status ───
     if (action === "vpn_status") {
-      const res = await fetch(`${BASE}/vpn/status`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/vpn/status`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     // ─── Connected VPN Clients ───
     if (action === "vpn_clients") {
-      const res = await fetch(`${BASE}/vpn/clients`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/vpn/clients`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     // ─── VPN Logs ───
@@ -145,34 +145,34 @@ Deno.serve(async (req) => {
       if (start_date) params.set("start_date", start_date);
       if (end_date) params.set("end_date", end_date);
       if (limit) params.set("limit", String(limit));
-      const res = await fetch(`${BASE}/vpn/logs?${params.toString()}`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/vpn/logs?${params.toString()}`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     // ─── Certificates ───
     if (action === "list_certificates") {
-      const res = await fetch(`${BASE}/vpn/certificates`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/vpn/certificates`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     if (action === "create_certificate") {
       const { client_name, ip_address, description, expires_in_days } = body;
-      const res = await fetch(`${BASE}/vpn/certificates`, {
+      const data = await safeFetch(`${BASE}/vpn/certificates`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ client_name, ip_address, description, expires_in_days }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "revoke_certificate") {
       const { certificate_id, reason } = body;
-      const res = await fetch(`${BASE}/vpn/certificates/${certificate_id}`, {
+      const data = await safeFetch(`${BASE}/vpn/certificates/${certificate_id}`, {
         method: "DELETE",
         headers: ec2Headers(token),
         body: JSON.stringify({ reason }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "download_certificate") {
@@ -193,47 +193,46 @@ Deno.serve(async (req) => {
     // ─── Provisioning ───
     if (action === "provision_device") {
       const { device, vpn } = body;
-      const res = await fetch(`${BASE}/vpn/provision`, {
+      const data = await safeFetch(`${BASE}/vpn/provision`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ device, vpn }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "provision_status") {
       const { device_id } = body;
-      const res = await fetch(`${BASE}/vpn/provision/${device_id}/status`, {
+      const data = await safeFetch(`${BASE}/vpn/provision/${device_id}/status`, {
         headers: ec2Headers(token),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     // ─── Device proxy (ControlID via VPN) ───
     if (action === "device_status") {
       const { ip } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "device_proxy") {
-      // Generic proxy — pass any ControlID endpoint
       const { ip, endpoint, payload } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint, payload }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "sync_user") {
       const { ip, registration, name, user_type_id, begin_time, end_time, password } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
@@ -252,12 +251,12 @@ Deno.serve(async (req) => {
           },
         }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
@@ -266,22 +265,22 @@ Deno.serve(async (req) => {
           payload: { user_id, image: image_base64 },
         }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "list_device_users") {
       const { ip } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint: "/load_objects.fcgi", payload: { object: "users" } }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     if (action === "delete_device_user") {
       const { ip, user_ids } = body;
-      const res = await fetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/vpn/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
@@ -290,48 +289,49 @@ Deno.serve(async (req) => {
           payload: { object: "users", values: user_ids },
         }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     // ─── EC2 Backend endpoints ───
     if (action === "list_people") {
-      const res = await fetch(`${BASE}/people`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/people`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     if (action === "list_devices") {
-      const res = await fetch(`${BASE}/devices`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/devices`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     if (action === "sync_device") {
       const { device_id } = body;
-      const res = await fetch(`${BASE}/sync/${device_id}`, {
+      const data = await safeFetch(`${BASE}/sync/${device_id}`, {
         method: "POST",
         headers: ec2Headers(token),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     // ─── Scan VPN (uses /vpn/clients) ───
     if (action === "scan_vpn") {
-      const res = await fetch(`${BASE}/vpn/clients`, { headers: ec2Headers(token) });
-      return jsonRes(await res.json());
+      const data = await safeFetch(`${BASE}/vpn/clients`, { headers: ec2Headers(token) });
+      return jsonRes(data);
     }
 
     // ─── Webhooks ───
     if (action === "configure_webhook") {
       const { url, events, secret } = body;
-      const res = await fetch(`${BASE}/vpn/webhooks`, {
+      const data = await safeFetch(`${BASE}/vpn/webhooks`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ url, events, secret }),
       });
-      return jsonRes(await res.json());
+      return jsonRes(data);
     }
 
     return jsonRes({ error: `Invalid action: ${action}` }, 400);
   } catch (err) {
+    console.error(`[device-proxy] Error:`, err.message);
     return jsonRes({ error: err.message }, 500);
   }
 });
