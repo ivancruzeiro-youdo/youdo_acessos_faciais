@@ -13,6 +13,7 @@ import Empreendimentos from "@/pages/Empreendimentos";
 import Acessos from "@/pages/Acessos";
 import Equipamentos from "@/pages/Equipamentos";
 import Usuarios from "@/pages/Usuarios";
+import VPN from "@/pages/VPN";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
