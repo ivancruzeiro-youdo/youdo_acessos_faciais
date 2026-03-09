@@ -46,6 +46,23 @@ export default function Equipamentos() {
     },
   });
 
+  const { data: vpnClients } = useQuery({
+    queryKey: ["vpn_clients_status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("device-proxy", {
+        body: { action: "vpn_clients" },
+      });
+      if (error) return { clients: [] };
+      return data;
+    },
+    refetchInterval: 30000,
+    retry: 1,
+  });
+
+  const connectedIps = new Set(
+    (vpnClients?.clients || []).map((c: any) => c.ip_vpn)
+  );
+
   const upsert = useMutation({
     mutationFn: async () => {
       const payload = {
