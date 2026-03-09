@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const res = await fetch(`${EC2_API_URL}/proxy`, {
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
