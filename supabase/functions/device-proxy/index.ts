@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     if (action === "sync_user") {
       const { ip, registration, name, user_type_id, begin_time, end_time } =
         body;
-      const res = await fetch(`${EC2_API_URL}/proxy`, {
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
