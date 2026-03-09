@@ -210,18 +210,9 @@ Deno.serve(async (req) => {
       return jsonRes(await res.json());
     }
 
-    // ─── Scan VPN subnet ───
+    // ─── Scan VPN subnet (uses /api/vpn/clients) ───
     if (action === "scan_vpn") {
-      const { subnet, startIp, endIp } = body;
-      const res = await fetch(`${EC2_API_URL}/scan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subnet: subnet || "10.8.0",
-          startIp: startIp || 1,
-          endIp: endIp || 254,
-        }),
-      });
+      const res = await fetch(`${EC2_API_URL}/api/vpn/clients`);
       return jsonRes(await res.json());
     }
 

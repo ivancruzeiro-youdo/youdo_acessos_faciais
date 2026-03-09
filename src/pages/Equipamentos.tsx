@@ -141,18 +141,21 @@ export default function Equipamentos() {
     setScanResults(null);
     try {
       const { data, error } = await supabase.functions.invoke("device-proxy", {
-        body: { action: "scan_vpn" },
+        body: { action: "vpn_clients" },
       });
       if (error) throw error;
       
       const knownIps = items?.map((i) => i.ip_vpn) || [];
-      const results = (data?.devices || data || []).map((d: any) => ({
-        ...d,
-        known: knownIps.includes(d.ip),
+      const clients = data?.clients || [];
+      const results = clients.map((d: any) => ({
+        ip: d.ip_vpn,
+        model: d.client_name,
+        serial: "",
+        known: knownIps.includes(d.ip_vpn),
       }));
       setScanResults(results);
       setScanOpen(true);
-      toast.success(`Varredura concluída: ${results.length} dispositivo(s) encontrado(s)`);
+      toast.success(`${results.length} cliente(s) conectado(s) na VPN`);
     } catch (err: any) {
       toast.error("Erro na varredura: " + err.message);
     } finally {
