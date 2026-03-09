@@ -32,7 +32,7 @@ function useVpnAction<T = any>(action: string, params?: Record<string, any>) {
 
 // ─── Server Status Card ───
 function ServerStatus() {
-  const { data, isLoading, refetch } = useVpnAction("vpn_status");
+  const { data, isLoading, error, refetch } = useVpnAction("vpn_status");
   const server = data?.server;
   const stats = data?.statistics;
 
