@@ -32,7 +32,7 @@ function useVpnAction<T = any>(action: string, params?: Record<string, any>) {
 
 // ─── Server Status Card ───
 function ServerStatus() {
-  const { data, isLoading, refetch } = useVpnAction("vpn_status");
+  const { data, isLoading, error, refetch } = useVpnAction("vpn_status");
   const server = data?.server;
   const stats = data?.statistics;
 
@@ -54,6 +54,11 @@ function ServerStatus() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
           </div>
+        ) : error ? (
+          <div className="space-y-1">
+            <p className="text-destructive text-sm font-medium">Não foi possível conectar ao servidor.</p>
+            <p className="text-xs text-muted-foreground font-mono">{error instanceof Error ? error.message : String(error)}</p>
+          </div>
         ) : server ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Stat label="Status" value={
@@ -66,7 +71,7 @@ function ServerStatus() {
             <Stat label="Certificados" value={`${stats?.active_certificates ?? 0} ativos / ${stats?.revoked_certificates ?? 0} revogados`} />
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">Não foi possível conectar ao servidor.</p>
+          <p className="text-muted-foreground text-sm">Sem dados do servidor.</p>
         )}
       </CardContent>
     </Card>
