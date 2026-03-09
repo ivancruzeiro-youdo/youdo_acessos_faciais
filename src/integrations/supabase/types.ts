@@ -49,18 +49,21 @@ export type Database = {
       empreendimentos: {
         Row: {
           created_at: string
+          fase: string | null
           id: string
           nome: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          fase?: string | null
           id?: string
           nome: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          fase?: string | null
           id?: string
           nome?: string
           updated_at?: string

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
@@ -15,6 +15,7 @@ export default function Empreendimentos() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [nome, setNome] = useState("");
+  const [fase, setFase] = useState("");
   const queryClient = useQueryClient();
 
   const { data: items, isLoading } = useQuery({
@@ -28,11 +29,12 @@ export default function Empreendimentos() {
 
   const upsert = useMutation({
     mutationFn: async () => {
+      const payload = { nome, fase: fase || null };
       if (editId) {
-        const { error } = await supabase.from("empreendimentos").update({ nome }).eq("id", editId);
+        const { error } = await supabase.from("empreendimentos").update(payload).eq("id", editId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("empreendimentos").insert({ nome });
+        const { error } = await supabase.from("empreendimentos").insert(payload);
         if (error) throw error;
       }
     },
@@ -58,18 +60,21 @@ export default function Empreendimentos() {
 
   const resetForm = () => {
     setNome("");
+    setFase("");
     setEditId(null);
     setOpen(false);
   };
 
-  const startEdit = (item: { id: string; nome: string }) => {
+  const startEdit = (item: any) => {
     setEditId(item.id);
     setNome(item.nome);
+    setFase(item.fase ?? "");
     setOpen(true);
   };
 
   const filtered = items?.filter((i) =>
-    i.nome.toLowerCase().includes(search.toLowerCase())
+    i.nome.toLowerCase().includes(search.toLowerCase()) ||
+    (i.fase ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -92,6 +97,10 @@ export default function Empreendimentos() {
                 <Label>Nome</Label>
                 <Input value={nome} onChange={(e) => setNome(e.target.value)} required />
               </div>
+              <div className="space-y-2">
+                <Label>Fase (Identificação)</Label>
+                <Input value={fase} onChange={(e) => setFase(e.target.value)} placeholder="Ex: Fase 1, Bloco A" />
+              </div>
               <Button type="submit" className="w-full" disabled={upsert.isPending}>
                 {upsert.isPending ? "Salvando..." : "Salvar"}
               </Button>
@@ -102,12 +111,7 @@ export default function Empreendimentos() {
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+        <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <Card>
@@ -116,26 +120,24 @@ export default function Empreendimentos() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Fase</TableHead>
                 <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={2} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered?.length === 0 ? (
-                <TableRow><TableCell colSpan={2} className="text-center py-8 text-muted-foreground">Nenhum registro</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Nenhum registro</TableCell></TableRow>
               ) : (
                 filtered?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.nome}</TableCell>
+                    <TableCell>{item.fase || "—"}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => startEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove.mutate(item.id)} className="text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => remove.mutate(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
