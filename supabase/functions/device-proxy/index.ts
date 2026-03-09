@@ -18,22 +18,49 @@ async function getEc2Token(base: string): Promise<string> {
   const password = Deno.env.get("EC2_AUTH_PASSWORD");
   if (!email || !password) throw new Error("EC2 auth credentials not configured");
 
-  const res = await fetch(`${base}/auth/login`, {
+  const loginUrl = `${base}/auth/login`;
+  console.log(`[device-proxy] EC2 login attempt: ${loginUrl}`);
+
+  const res = await fetch(loginUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 
+  const text = await res.text();
+  console.log(`[device-proxy] EC2 login response (${res.status}): ${text.substring(0, 200)}`);
+
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`EC2 login failed (${res.status}): ${text}`);
+    throw new Error(`EC2 login failed (${res.status}): ${text.substring(0, 200)}`);
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`EC2 login returned non-JSON (${res.status}): ${text.substring(0, 200)}`);
+  }
+
   ec2Token = data.token;
-  // Cache for 50 minutes (assuming 1h expiry)
   ec2TokenExpiry = now + 50 * 60 * 1000;
   return ec2Token!;
+}
+
+// Safe JSON fetch helper
+async function safeFetch(url: string, opts?: RequestInit): Promise<any> {
+  console.log(`[device-proxy] Fetch: ${opts?.method || "GET"} ${url}`);
+  const res = await fetch(url, opts);
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(`EC2 error (${res.status}): ${text.substring(0, 300)}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`EC2 returned non-JSON (${res.status}): ${text.substring(0, 300)}`);
+  }
 }
 
 function ec2Headers(token: string) {
