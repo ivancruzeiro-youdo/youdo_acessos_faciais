@@ -214,17 +214,17 @@ Deno.serve(async (req) => {
     // ─── Device proxy (ControlID via VPN) ───
     if (action === "device_status") {
       const { ip } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
-        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
+        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi", payload: {} }),
       });
       return jsonRes(data);
     }
 
     if (action === "device_proxy") {
       const { ip, endpoint, payload } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint, payload }),
@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user") {
       const { ip, registration, name, user_type_id, begin_time, end_time, password } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
 
     if (action === "list_device_users") {
       const { ip } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint: "/load_objects.fcgi", payload: { object: "users" } }),
@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
 
     if (action === "delete_device_user") {
       const { ip, user_ids } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
