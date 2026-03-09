@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({
