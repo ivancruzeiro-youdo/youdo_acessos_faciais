@@ -214,17 +214,17 @@ Deno.serve(async (req) => {
     // ─── Device proxy (ControlID via VPN) ───
     if (action === "device_status") {
       const { ip } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
-        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
+        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi", payload: {} }),
       });
       return jsonRes(data);
     }
 
     if (action === "device_proxy") {
       const { ip, endpoint, payload } = body;
-      const data = await safeFetch(`${BASE}/vpn/proxy`, {
+      const data = await safeFetch(`${BASE}/proxy`, {
         method: "POST",
         headers: ec2Headers(token),
         body: JSON.stringify({ ip, endpoint, payload }),
