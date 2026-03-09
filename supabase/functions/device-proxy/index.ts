@@ -153,27 +153,21 @@ Deno.serve(async (req) => {
     }
 
     // ─── Device proxy (ControlID via VPN) ───
+    // Requires /api/vpn/proxy endpoint on EC2
     if (action === "device_status") {
       const { ip } = body;
-      // Try documented proxy first, fallback to direct
-      try {
-        const res = await fetch(`${EC2_API_URL}/proxy`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
-        });
-        return jsonRes(await res.json());
-      } catch {
-        // Fallback: try direct API endpoint
-        const res = await fetch(`${EC2_API_URL}/api/vpn/device/${ip}/status`);
-        return jsonRes(await res.json());
-      }
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip, endpoint: "/device_status.fcgi" }),
+      });
+      return jsonRes(await res.json());
     }
 
     if (action === "sync_user") {
       const { ip, registration, name, user_type_id, begin_time, end_time } =
         body;
-      const res = await fetch(`${EC2_API_URL}/proxy`, {
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,7 +192,7 @@ Deno.serve(async (req) => {
 
     if (action === "sync_user_photo") {
       const { ip, user_id, image_base64 } = body;
-      const res = await fetch(`${EC2_API_URL}/proxy`, {
+      const res = await fetch(`${EC2_API_URL}/api/vpn/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -210,18 +204,9 @@ Deno.serve(async (req) => {
       return jsonRes(await res.json());
     }
 
-    // ─── Scan VPN subnet ───
+    // ─── Scan VPN subnet (uses /api/vpn/clients) ───
     if (action === "scan_vpn") {
-      const { subnet, startIp, endIp } = body;
-      const res = await fetch(`${EC2_API_URL}/scan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subnet: subnet || "10.8.0",
-          startIp: startIp || 1,
-          endIp: endIp || 254,
-        }),
-      });
+      const res = await fetch(`${EC2_API_URL}/api/vpn/clients`);
       return jsonRes(await res.json());
     }
 
