@@ -58,10 +58,8 @@ function ServerStatus() {
           <div className="space-y-1">
             <p className="text-destructive text-sm font-medium">Não foi possível conectar ao servidor.</p>
             <p className="text-xs text-muted-foreground font-mono">{error instanceof Error ? error.message : String(error)}</p>
-            {data?.error && <p className="text-xs text-muted-foreground font-mono">{data.error}</p>}
           </div>
-        ) : !server ? (
-          <p className="text-muted-foreground text-sm">Sem dados do servidor.</p>
+        ) : server ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Stat label="Status" value={
               <Badge variant={server.status === "running" ? "default" : "destructive"}>
@@ -73,7 +71,7 @@ function ServerStatus() {
             <Stat label="Certificados" value={`${stats?.active_certificates ?? 0} ativos / ${stats?.revoked_certificates ?? 0} revogados`} />
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">Não foi possível conectar ao servidor.</p>
+          <p className="text-muted-foreground text-sm">Sem dados do servidor.</p>
         )}
       </CardContent>
     </Card>
