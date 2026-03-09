@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const EC2_API_URL = Deno.env.get("EC2_API_URL");
+  const EC2_API_URL = (Deno.env.get("EC2_API_URL") || "").trim();
   if (!EC2_API_URL) {
     return new Response(
       JSON.stringify({ error: "EC2_API_URL not configured" }),
