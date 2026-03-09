@@ -54,7 +54,14 @@ function ServerStatus() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
           </div>
-        ) : server ? (
+        ) : error ? (
+          <div className="space-y-1">
+            <p className="text-destructive text-sm font-medium">Não foi possível conectar ao servidor.</p>
+            <p className="text-xs text-muted-foreground font-mono">{error instanceof Error ? error.message : String(error)}</p>
+            {data?.error && <p className="text-xs text-muted-foreground font-mono">{data.error}</p>}
+          </div>
+        ) : !server ? (
+          <p className="text-muted-foreground text-sm">Sem dados do servidor.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Stat label="Status" value={
               <Badge variant={server.status === "running" ? "default" : "destructive"}>
