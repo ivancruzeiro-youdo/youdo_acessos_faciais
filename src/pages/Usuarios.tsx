@@ -202,11 +202,9 @@ export default function Usuarios() {
 
       // Buscar status VPN para saber quais estão online
 
-      const vpnResponse = await fetch('/api/vpn/status');
+      const vpnData = await api.get<any>('/vpn/clients');
 
-      const vpnData = await vpnResponse.json();
-
-      const onlineIps = new Set((vpnData?.clients || []).map((c: any) => c.vpn_address));
+      const onlineIps = new Set((vpnData?.clients || []).map((c: any) => c.ip_vpn));
 
 
 
@@ -236,69 +234,29 @@ export default function Usuarios() {
 
 
 
-      for (const reader of onlineReaders) {
+      for (const user of (usuarios || [])) {
 
-        try {
+        const readersForUser = onlineReaders.filter(r => r.acesso_id === user.acesso_id);
 
-          // Filtrar usuários que têm acesso a este leitor
+        for (const reader of readersForUser) {
 
-          const usersForReader = usuarios?.filter(u => {
+          try {
 
-            const equipamentos = (u.acessos as any)?.equipamentos || [];
+            await api.post('/vpn/sync-user', {
 
-            return equipamentos.some((eq: any) => eq.id === reader.id);
+              reader_ip: reader.ip_vpn,
 
-          }) || [];
-
-
-
-          // Enviar cada usuário para o leitor
-
-          for (const user of usersForReader) {
-
-            const response = await fetch(`/api/vpn/sync-user`, {
-
-              method: 'POST',
-
-              headers: { 'Content-Type': 'application/json' },
-
-              body: JSON.stringify({
-
-                reader_ip: reader.ip_vpn,
-
-                user: {
-
-                  id: user.id,
-
-                  name: user.nome,
-
-                  photo: user.foto_base64,
-
-                }
-
-              })
+              user: { id: user.id, name: user.nome, photo: user.foto_base64 },
 
             });
 
+            successCount++;
 
+          } catch {
 
-            if (response.ok) {
-
-              successCount++;
-
-            } else {
-
-              errorCount++;
-
-            }
+            errorCount++;
 
           }
-
-        } catch (err) {
-
-          console.error(`Erro ao sincronizar com ${reader.nome}:`, err);
-
-          errorCount++;
 
         }
 
