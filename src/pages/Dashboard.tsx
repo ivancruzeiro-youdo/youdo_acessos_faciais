@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, DoorOpen, Cpu, Users } from "lucide-react";
 
@@ -7,32 +7,32 @@ export default function Dashboard() {
   const { data: empreendimentos } = useQuery({
     queryKey: ["empreendimentos-count"],
     queryFn: async () => {
-      const { count } = await supabase.from("empreendimentos").select("*", { count: "exact", head: true });
-      return count ?? 0;
+      const data = await api.get<any[]>("/empreendimentos");
+      return data?.length ?? 0;
     },
   });
 
   const { data: acessos } = useQuery({
     queryKey: ["acessos-count"],
     queryFn: async () => {
-      const { count } = await supabase.from("acessos").select("*", { count: "exact", head: true });
-      return count ?? 0;
+      const data = await api.get<any[]>("/acessos");
+      return data?.length ?? 0;
     },
   });
 
   const { data: equipamentos } = useQuery({
     queryKey: ["equipamentos-count"],
     queryFn: async () => {
-      const { count } = await supabase.from("equipamentos").select("*", { count: "exact", head: true });
-      return count ?? 0;
+      const data = await api.get<any[]>("/equipamentos");
+      return data?.length ?? 0;
     },
   });
 
   const { data: usuarios } = useQuery({
     queryKey: ["usuarios-count"],
     queryFn: async () => {
-      const { count } = await supabase.from("usuarios").select("*", { count: "exact", head: true });
-      return count ?? 0;
+      const data = await api.get<any[]>("/usuarios");
+      return data?.length ?? 0;
     },
   });
 

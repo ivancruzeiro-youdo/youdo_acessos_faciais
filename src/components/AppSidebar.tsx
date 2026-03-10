@@ -5,6 +5,7 @@ import {
   Cpu,
   Users,
   Network,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -30,6 +31,7 @@ const mainItems = [
   { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
   { title: "Acessos", url: "/acessos", icon: DoorOpen },
   { title: "Equipamentos", url: "/equipamentos", icon: Cpu },
+  { title: "Config. Equipamentos", url: "/equipamentos/configuracoes", icon: Settings },
   { title: "Usuários", url: "/usuarios", icon: Users },
   { title: "VPN", url: "/vpn", icon: Network },
 ];
@@ -87,6 +89,7 @@ export function AppSidebar() {
         <Separator className="bg-sidebar-border mb-2" />
         {!collapsed && (
           <div className="px-2 py-1">
+            <p className="text-xs text-sidebar-foreground/30 truncate">v1.0.0 — 10/03/2026</p>
             <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
           </div>
         )}

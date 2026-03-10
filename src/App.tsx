@@ -14,6 +14,7 @@ import Acessos from "@/pages/Acessos";
 import Equipamentos from "@/pages/Equipamentos";
 import Usuarios from "@/pages/Usuarios";
 import VPN from "@/pages/VPN";
+import ConfiguracoesEquipamentos from "@/pages/ConfiguracoesEquipamentos";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/empreendimentos" element={<Empreendimentos />} />
               <Route path="/acessos" element={<Acessos />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/equipamentos/configuracoes" element={<ConfiguracoesEquipamentos />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/vpn" element={<VPN />} />
             </Route>
