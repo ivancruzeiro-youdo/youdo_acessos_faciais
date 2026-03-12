@@ -15,6 +15,11 @@ import Equipamentos from "@/pages/Equipamentos";
 import Usuarios from "@/pages/Usuarios";
 import VPN from "@/pages/VPN";
 import ConfiguracoesEquipamentos from "@/pages/ConfiguracoesEquipamentos";
+import Logs from "@/pages/Logs";
+import ConfiguradorLocal from "@/pages/ConfiguradorLocal";
+import Configuracoes from "@/pages/Configuracoes";
+import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
+import Funcionarios from "@/pages/Funcionarios";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +48,11 @@ const App = () => (
               <Route path="/equipamentos/configuracoes" element={<ConfiguracoesEquipamentos />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/vpn" element={<VPN />} />
+              <Route path="/logs" element={<Logs />} />
+              <Route path="/configurador-de-equipamento-local" element={<ConfiguradorLocal />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
+              <Route path="/funcionarios" element={<Funcionarios />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

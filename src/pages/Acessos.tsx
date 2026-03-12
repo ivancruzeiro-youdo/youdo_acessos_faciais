@@ -14,11 +14,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { UserpSyncButton } from "@/components/UserpSyncButton";
 
 import { toast } from "sonner";
 
@@ -27,6 +28,8 @@ import { toast } from "sonner";
 export default function Acessos() {
 
   const [search, setSearch] = useState("");
+
+  const [filterEmp, setFilterEmp] = useState("all");
 
   const [open, setOpen] = useState(false);
 
@@ -138,11 +141,11 @@ export default function Acessos() {
 
 
 
-  const filtered = items?.filter((i) =>
-
-    i.nome.toLowerCase().includes(search.toLowerCase())
-
-  );
+  const filtered = items?.filter((i) => {
+    const matchSearch = i.nome.toLowerCase().includes(search.toLowerCase());
+    const matchEmp = filterEmp === "all" || i.empreendimento_id === filterEmp;
+    return matchSearch && matchEmp;
+  });
 
 
 
@@ -160,13 +163,9 @@ export default function Acessos() {
 
         </div>
 
-        <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); setOpen(o); }}>
-
-          <DialogTrigger asChild>
-
-            <Button><Plus className="h-4 w-4 mr-2" /> Novo</Button>
-
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <UserpSyncButton tipo="unidades" label="Importar Unidades" onSuccess={() => queryClient.invalidateQueries({ queryKey: ["acessos"] })} />
+          <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); setOpen(o); }}>
 
           <DialogContent>
 
@@ -219,17 +218,28 @@ export default function Acessos() {
           </DialogContent>
 
         </Dialog>
+        </div>
 
       </div>
 
 
 
-      <div className="relative max-w-sm">
-
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
-        <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative max-w-sm flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <Select value={filterEmp} onValueChange={setFilterEmp}>
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Todos os empreendimentos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os empreendimentos</SelectItem>
+            {empreendimentos?.map((e) => (
+              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
 
@@ -247,8 +257,6 @@ export default function Acessos() {
                 <TableHead>Nome</TableHead>
 
                 <TableHead>Empreendimento</TableHead>
-
-                <TableHead className="w-24">Ações</TableHead>
 
               </TableRow>
 
@@ -273,18 +281,6 @@ export default function Acessos() {
                     <TableCell className="font-medium">{item.nome}</TableCell>
 
                     <TableCell>{(item.empreendimentos as any)?.nome}</TableCell>
-
-                    <TableCell>
-
-                      <div className="flex gap-1">
-
-                        <Button variant="ghost" size="icon" onClick={() => startEdit(item)}><Pencil className="h-4 w-4" /></Button>
-
-                        <Button variant="ghost" size="icon" onClick={() => remove.mutate(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-
-                      </div>
-
-                    </TableCell>
 
                   </TableRow>
 

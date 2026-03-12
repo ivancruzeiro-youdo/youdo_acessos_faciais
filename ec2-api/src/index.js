@@ -24,6 +24,12 @@ const vpnRoutes = require('./routes/vpn');
 
 const equipamentosConfigRoutes = require('./routes/equipamentos-config');
 
+const logsRoutes = require('./routes/logs');
+
+const provisionerRoutes = require('./routes/provisioner');
+
+const userpSyncRoutes = require('./routes/userp-sync');
+
 
 
 const app = express();
@@ -63,6 +69,12 @@ app.use('/api/vpn', syncUsersRoutes);
 app.use('/api/vpn', vpnRoutes);
 
 app.use('/api/equipamentos', equipamentosConfigRoutes);
+
+app.use('/api/logs', logsRoutes);
+
+app.use('/api/provisioner', provisionerRoutes);
+
+app.use('/api/userp/sync', userpSyncRoutes);
 
 
 

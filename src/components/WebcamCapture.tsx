@@ -15,9 +15,30 @@ export function WebcamCapture({ onCapture, currentImage }: WebcamCaptureProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot();
+    // Qualidade máxima JPEG (1.0) na resolução nativa da webcam
+    const imageSrc = webcamRef.current?.getScreenshot({ width: 1280, height: 720 });
     if (imageSrc) {
-      setCapturedImage(imageSrc);
+      // Redimensionar via canvas garantindo qualidade máxima
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Manter proporção mas garantir mínimo 640px de largura
+        const minW = 640;
+        const scale = img.width < minW ? minW / img.width : 1;
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Exportar com qualidade 1.0
+          setCapturedImage(canvas.toDataURL("image/jpeg", 1.0));
+        } else {
+          setCapturedImage(imageSrc);
+        }
+      };
+      img.src = imageSrc;
     }
   }, [webcamRef]);
 
@@ -67,9 +88,10 @@ export function WebcamCapture({ onCapture, currentImage }: WebcamCaptureProps) {
                   ref={webcamRef}
                   audio={false}
                   screenshotFormat="image/jpeg"
+                  screenshotQuality={1}
                   videoConstraints={{
-                    width: 1280,
-                    height: 720,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
                     facingMode: "user"
                   }}
                   className="w-full h-full object-contain"

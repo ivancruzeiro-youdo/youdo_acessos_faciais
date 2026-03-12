@@ -7,6 +7,11 @@ import {
   Network,
   Settings,
   LogOut,
+  ScrollText,
+  FolderDown,
+  MonitorCheck,
+  UserCog,
+  Briefcase,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,6 +31,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
+const supportItems = [
+  { title: "Configurador Local", url: "/configurador-de-equipamento-local", icon: MonitorCheck },
+  { title: "Usuários do Sistema", url: "/gerenciar-usuarios", icon: UserCog },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
+];
+
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
@@ -33,7 +44,9 @@ const mainItems = [
   { title: "Equipamentos", url: "/equipamentos", icon: Cpu },
   { title: "Config. Equipamentos", url: "/equipamentos/configuracoes", icon: Settings },
   { title: "Usuários", url: "/usuarios", icon: Users },
+  { title: "Funcionários", url: "/funcionarios", icon: Briefcase },
   { title: "VPN", url: "/vpn", icon: Network },
+  { title: "Logs", url: "/logs", icon: ScrollText },
 ];
 
 export function AppSidebar() {
@@ -83,13 +96,35 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel><FolderDown className="h-3 w-3 inline mr-1" />Arquivos de Suporte</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {supportItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-2">
         <Separator className="bg-sidebar-border mb-2" />
         {!collapsed && (
           <div className="px-2 py-1">
-            <p className="text-xs text-sidebar-foreground/30 truncate">v1.0.0 — 10/03/2026</p>
+            <p className="text-xs text-sidebar-foreground/30 truncate">build {__BUILD_DATE__} {__BUILD_TIME__}</p>
             <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
           </div>
         )}

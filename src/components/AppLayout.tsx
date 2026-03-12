@@ -3,7 +3,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
 
 const APP_VERSION = "1.0.0";
-const BUILD_DATE = new Date().toISOString().split('T')[0];
+declare const __BUILD_DATE__: string;
+declare const __BUILD_TIME__: string;
 
 export function AppLayout() {
   return (
@@ -19,7 +20,7 @@ export function AppLayout() {
           </main>
           <footer className="h-8 flex items-center justify-center border-t bg-muted/30 px-4">
             <p className="text-xs text-muted-foreground">
-              v{APP_VERSION} • Build {BUILD_DATE} • {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              v{APP_VERSION} • Build {__BUILD_DATE__} {__BUILD_TIME__}
             </p>
           </footer>
         </div>

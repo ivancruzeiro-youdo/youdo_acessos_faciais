@@ -14,11 +14,13 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { toast } from "sonner";
+
+import { UserpSyncButton } from "@/components/UserpSyncButton";
 
 
 
@@ -152,19 +154,17 @@ export default function Empreendimentos() {
 
         </div>
 
+        <div className="flex gap-2">
+
+        <UserpSyncButton tipo="empreendimentos" onSuccess={() => queryClient.invalidateQueries({ queryKey: ["empreendimentos"] })} />
+
         <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); setOpen(o); }}>
-
-          <DialogTrigger asChild>
-
-            <Button><Plus className="h-4 w-4 mr-2" /> Novo</Button>
-
-          </DialogTrigger>
 
           <DialogContent>
 
             <DialogHeader>
 
-              <DialogTitle>{editId ? "Editar" : "Novo"} Empreendimento</DialogTitle>
+              <DialogTitle>Editar Empreendimento</DialogTitle>
 
             </DialogHeader>
 
@@ -198,6 +198,8 @@ export default function Empreendimentos() {
 
         </Dialog>
 
+        </div>
+
       </div>
 
 
@@ -226,8 +228,6 @@ export default function Empreendimentos() {
 
                 <TableHead>Fase</TableHead>
 
-                <TableHead className="w-24">Ações</TableHead>
-
               </TableRow>
 
             </TableHeader>
@@ -251,18 +251,6 @@ export default function Empreendimentos() {
                     <TableCell className="font-medium">{item.nome}</TableCell>
 
                     <TableCell>{item.fase || "—"}</TableCell>
-
-                    <TableCell>
-
-                      <div className="flex gap-1">
-
-                        <Button variant="ghost" size="icon" onClick={() => startEdit(item)}><Pencil className="h-4 w-4" /></Button>
-
-                        <Button variant="ghost" size="icon" onClick={() => remove.mutate(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-
-                      </div>
-
-                    </TableCell>
 
                   </TableRow>
 

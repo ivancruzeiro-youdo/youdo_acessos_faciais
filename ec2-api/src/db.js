@@ -53,12 +53,24 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS usuarios (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nome TEXT NOT NULL,
-        acesso_id UUID NOT NULL REFERENCES acessos(id) ON DELETE CASCADE,
+        acesso_id UUID REFERENCES acessos(id) ON DELETE SET NULL,
         userp_id TEXT,
+        matricula TEXT,
+        data_inicio TIMESTAMPTZ,
+        data_fim TIMESTAMPTZ,
+        foto_base64 TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS usuario_acessos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        acesso_id UUID NOT NULL REFERENCES acessos(id) ON DELETE CASCADE,
         data_inicio TIMESTAMPTZ,
         data_fim TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        UNIQUE(usuario_id, acesso_id)
       );
 
       CREATE TABLE IF NOT EXISTS profiles (
@@ -71,12 +83,95 @@ async function initDb() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
+      CREATE TABLE IF NOT EXISTS equipamentos_config (
+        id INT PRIMARY KEY DEFAULT 1,
+        logotipo TEXT,
+        ntp_enabled BOOLEAN NOT NULL DEFAULT true,
+        ntp_timezone TEXT NOT NULL DEFAULT 'UTC-3',
+        admin_login TEXT NOT NULL DEFAULT 'admin',
+        admin_password TEXT,
+        menu_password TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
       CREATE TABLE IF NOT EXISTS user_roles (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,
         role app_role NOT NULL DEFAULT 'operador',
         UNIQUE(user_id, role)
       );
+    `);
+
+    // Migrar colunas que podem não existir em bancos antigos
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS matricula TEXT;
+        ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS foto_base64 TEXT;
+        ALTER TABLE usuarios ALTER COLUMN acesso_id DROP NOT NULL;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+
+      ALTER TABLE empreendimentos ADD COLUMN IF NOT EXISTS userp_id INTEGER;
+      CREATE UNIQUE INDEX IF NOT EXISTS empreendimentos_userp_id_idx ON empreendimentos(userp_id) WHERE userp_id IS NOT NULL;
+
+      ALTER TABLE acessos ADD COLUMN IF NOT EXISTS userp_id INTEGER;
+      CREATE UNIQUE INDEX IF NOT EXISTS acessos_userp_id_idx ON acessos(userp_id) WHERE userp_id IS NOT NULL;
+
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS userp_id INTEGER;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS fone TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS vigencia_inicio DATE;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS vigencia_fim DATE;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS deleted_by_sync BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS deleted_by_sync_at TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS usuario_acessos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        acesso_id UUID NOT NULL REFERENCES acessos(id) ON DELETE CASCADE,
+        data_inicio TIMESTAMPTZ,
+        data_fim TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(usuario_id, acesso_id)
+      );
+
+      INSERT INTO usuario_acessos (usuario_id, acesso_id, data_inicio, data_fim)
+        SELECT id, acesso_id, data_inicio, data_fim FROM usuarios
+        WHERE acesso_id IS NOT NULL
+        ON CONFLICT (usuario_id, acesso_id) DO NOTHING;
+
+      CREATE TABLE IF NOT EXISTS system_logs (
+        id BIGSERIAL PRIMARY KEY,
+        level TEXT NOT NULL DEFAULT 'info',
+        origem TEXT NOT NULL,
+        mensagem TEXT NOT NULL,
+        detalhes JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS funcionarios (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        userp_id INTEGER UNIQUE,
+        foto_base64 TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS funcionario_acessos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        funcionario_id UUID NOT NULL REFERENCES funcionarios(id) ON DELETE CASCADE,
+        acesso_id UUID NOT NULL REFERENCES acessos(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(funcionario_id, acesso_id)
+      );
+
+      INSERT INTO equipamentos_config (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+      DO $$ BEGIN
+        ALTER TABLE equipamentos_config ADD COLUMN IF NOT EXISTS admin_login TEXT NOT NULL DEFAULT 'admin';
+        ALTER TABLE equipamentos_config ADD COLUMN IF NOT EXISTS admin_password TEXT;
+        ALTER TABLE equipamentos_config ADD COLUMN IF NOT EXISTS menu_password TEXT;
+      END $$;
     `);
 
     // Criar trigger updated_at
@@ -87,7 +182,7 @@ async function initDb() {
       $$ LANGUAGE plpgsql;
     `);
 
-    const tables = ['empreendimentos', 'acessos', 'equipamentos', 'usuarios', 'profiles'];
+    const tables = ['empreendimentos', 'acessos', 'equipamentos', 'usuarios', 'profiles', 'funcionarios'];
     for (const t of tables) {
       await client.query(`
         DO $$ BEGIN

@@ -57,6 +57,58 @@ router.post('/register', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/auth/users — lista todos os usuários do sistema (somente admin)
+router.get('/users', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.user_id, p.email, p.display_name, p.created_at,
+             COALESCE(json_agg(r.role ORDER BY r.role) FILTER (WHERE r.role IS NOT NULL), '[]') as roles
+      FROM profiles p
+      LEFT JOIN user_roles r ON r.user_id = p.user_id
+      GROUP BY p.user_id, p.email, p.display_name, p.created_at
+      ORDER BY p.created_at
+    `);
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/auth/users/:id
+router.delete('/users/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.params.id === req.user.userId) return res.status(400).json({ error: 'Não é possível excluir o próprio usuário' });
+    const { rowCount } = await pool.query('DELETE FROM profiles WHERE user_id = $1', [req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PATCH /api/auth/users/:id/role
+router.patch('/users/:id/role', authMiddleware, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['admin', 'operador'].includes(role)) return res.status(400).json({ error: 'Role inválido. Use admin ou operador' });
+    // Verificar que o usuário existe
+    const { rows } = await pool.query('SELECT user_id FROM profiles WHERE user_id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado' });
+    // Substituir roles — remover todas e inserir a nova
+    await pool.query('DELETE FROM user_roles WHERE user_id = $1', [req.params.id]);
+    await pool.query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [req.params.id, role]);
+    res.json({ success: true, role });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/auth/users/:id/reset-password
+router.post('/users/:id/reset-password', authMiddleware, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) return res.status(400).json({ error: 'Senha deve ter pelo menos 6 caracteres' });
+    const hash = await bcrypt.hash(password, 10);
+    const { rowCount } = await pool.query('UPDATE profiles SET password_hash = $1 WHERE user_id = $2', [hash, req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/auth/me
 router.get('/me', authMiddleware, async (req, res) => {
   try {

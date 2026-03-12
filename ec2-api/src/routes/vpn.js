@@ -3,8 +3,101 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const { authMiddleware } = require('../middleware/auth');
+const { pool } = require('../db');
 const router = express.Router();
 
+// Helper: login no leitor tentando credenciais do banco e admin/admin
+async function tryDeviceLogin(ip, timeoutMs = 5000) {
+  async function doLogin(login, password) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(`http://${ip}/login.fcgi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password }),
+        signal: ctrl.signal,
+      });
+      const data = await res.json();
+      return data?.session ? { session: data.session } : null;
+    } catch { return null; } finally { clearTimeout(t); }
+  }
+  try {
+    const { rows } = await pool.query('SELECT admin_login, admin_password FROM equipamentos_config WHERE id = 1');
+    const login = rows[0]?.admin_login || 'admin';
+    const password = rows[0]?.admin_password || 'admin';
+    let auth = await doLogin(login, password);
+    if (!auth) auth = await doLogin('admin', 'admin');
+    return auth;
+  } catch { return null; }
+}
+
+// Helper: aplicar config padrão em um leitor (NTP, logotipo, mensagem tela)
+async function applyDefaultConfig(ip, nome) {
+  try {
+    const auth = await tryDeviceLogin(ip);
+    if (!auth) return { ok: false, error: 'login falhou' };
+    const { session } = auth;
+
+    const { rows: cfgRows } = await pool.query(
+      'SELECT logotipo, ntp_enabled, ntp_timezone, admin_login, admin_password, menu_password FROM equipamentos_config WHERE id = 1'
+    );
+    const cfg = cfgRows[0] || {};
+
+    // NTP
+    await fetch(`http://${ip}/set_configuration.fcgi?session=${session}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ntp: { enabled: cfg.ntp_enabled !== false ? '1' : '0', timezone: cfg.ntp_timezone || 'UTC-3' } }),
+    }).catch(() => {});
+
+    // Mensagem na tela
+    await fetch(`http://${ip}/message_to_screen.fcgi?session=${session}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: nome, timeout: 0 }),
+    }).catch(() => {});
+
+    // Alterar login/senha se configurado (e diferente de admin/admin)
+    if (cfg.admin_login && cfg.admin_password && (cfg.admin_login !== 'admin' || cfg.admin_password !== 'admin')) {
+      await fetch(`http://${ip}/change_login.fcgi?session=${session}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: cfg.admin_login, password: cfg.admin_password }),
+      }).catch(() => {});
+    }
+
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// POST /api/vpn/on-connect — chamado pelo script OpenVPN quando leitor conecta
+// Autenticação: x-provisioner-token (sem JWT, chamado localmente pelo OpenVPN)
+const PROVISIONER_TOKEN = process.env.PROVISIONER_TOKEN || 'youdo-provisioner-2024';
+router.post('/on-connect', async (req, res) => {
+  const token = req.headers['x-provisioner-token'] || req.query.token;
+  if (token !== PROVISIONER_TOKEN) return res.status(401).json({ error: 'Token inválido' });
+  const { client_name, ip_vpn } = req.body;
+  if (!client_name || !ip_vpn) return res.status(400).json({ error: 'client_name e ip_vpn obrigatórios' });
+  try {
+    // Atualizar ip_vpn no banco
+    await pool.query(
+      'UPDATE equipamentos SET ip_vpn = $1 WHERE nome = $2',
+      [ip_vpn, client_name]
+    );
+    // Aguardar leitor ficar acessível (até 30s) e aplicar config
+    let applied = { ok: false, error: 'timeout' };
+    for (let i = 0; i < 6; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      applied = await applyDefaultConfig(ip_vpn, client_name);
+      if (applied.ok) break;
+    }
+    res.json({ success: true, client_name, ip_vpn, config_applied: applied });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Todas as rotas abaixo requerem JWT
 router.use((req, res, next) => authMiddleware(req, res, next));
 
 // Parse status.log do OpenVPN
